@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "SDL/SDL.h"
+#include "SDL/SDL_rotozoom.h"
+#include "SDL/SDL_image.h"
 
 #define true 1
 #define false 0
-#define SCREEN_WIDTH  800
-#define SCREEN_HEIGHT 600
 #define FLOOR_HEIGHT 430
 #define TEMP_SPRITE_SIZE 64
 #define TEMP_BG_SIZE 1200
 #define GRAVITY 2
-#define FRICTION .45
-#define PLR_ACCEL .8
+#define FRICTION .8
+#define PLR_ACCEL 5
 
 /* Define keybinds */
 #define btn_left SDLK_LEFT
@@ -28,9 +28,17 @@ int main ( int argc, char *argv[] )
   SDL_Event event;
   Uint8 *keystate;
 
+  int SCREEN_WIDTH = 640;
+  int SCREEN_HEIGHT = 480;
+  int LEVEL_WIDTH = 1200;
+  int LEVEL_HEIGHT = 800;
+
   int colorkey, gameover;
 
+  float PLR_wX,PLR_wY;
   float PLR_yvel, PLR_xvel;
+  float LPX,LPY;
+  float camX, camY;
 
   int PLR_jump = 0, PLR_grounded = 0;
 
@@ -38,7 +46,7 @@ int main ( int argc, char *argv[] )
   SDL_Init(SDL_INIT_VIDEO);
 
   /* set the title bar */
-  SDL_WM_SetCaption("SDL Move", "SDL Move");
+  SDL_WM_SetCaption("SDL Window", "SDL Window");
 
   /* create window */
   screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 0, SDL_RESIZABLE );
@@ -53,16 +61,19 @@ int main ( int argc, char *argv[] )
   SDL_SetColorKey(plrsprite, SDL_SRCCOLORKEY | SDL_RLEACCEL, colorkey);
 
   /* load grass */
-  temp  = SDL_LoadBMP("good_background.bmp");
+  temp  = IMG_Load("good_background_index.pcx");
   grass = SDL_DisplayFormat(temp);
   SDL_FreeSurface(temp);
 
   /* set sprite position */
-  rcPLRSprite.x = 0;
-  rcPLRSprite.y = 300;
-
-  rcGrass.x = -500;
-  rcGrass.y = 0;
+  rcPLRSprite.x = SCREEN_WIDTH / 2;
+  rcPLRSprite.y = SCREEN_HEIGHT / 2;
+  PLR_wX = 0;
+  PLR_wY = 0;
+  LPX=0;
+  LPY=0;
+  camX=0;
+  camY=0;
 
   PLR_xvel = 0;
   PLR_yvel = 0;
@@ -103,44 +114,46 @@ int main ( int argc, char *argv[] )
     keystate = SDL_GetKeyState(NULL);
     if (keystate[btn_left] ) {
       if (PLR_xvel > -5) {
-			    PLR_xvel -= PLR_ACCEL;
-		}
+			  PLR_xvel -= PLR_ACCEL;
+		  }
     }
     if (keystate[btn_right] ) {
-		if (PLR_xvel < 5) {
-			    PLR_xvel += PLR_ACCEL;
-		}
+		  if (PLR_xvel < 5) {
+			  PLR_xvel += PLR_ACCEL;
+		  }
     }
 
 	/* Debug background movement */
     if (keystate[SDLK_i] ) {
-      rcGrass.y -= 10;
+      camY += 10;
     }
 	if (keystate[SDLK_j] ) {
-      rcGrass.x -= 10;
+      camX += 10;
     }
 	if (keystate[SDLK_k] ) {
-      rcGrass.y += 10;
+      camY -= 10;
     }
 	if (keystate[SDLK_l] ) {
-      rcGrass.x += 10;
+      camX -= 10;
     }
 
 	/* Apply velocity to the player */
-	rcPLRSprite.y = rcPLRSprite.y + PLR_yvel;
-	rcPLRSprite.x = rcPLRSprite.x + PLR_xvel;
+	PLR_wY = PLR_wY + PLR_yvel;
+	PLR_wX = PLR_wX + PLR_xvel;
 
-	if (PLR_xvel < .5) {
+  /* Apply friction to the player */
+
+	if (PLR_xvel < -.5) {
 		PLR_xvel = PLR_xvel + FRICTION;
-	} else if (PLR_xvel > -.5) {
+	} else if (PLR_xvel > .5) {
 		PLR_xvel = PLR_xvel - FRICTION;
 	} else {
 		PLR_xvel = 0;
 	}
 
 	/* Check for floor collision */
-	if (rcPLRSprite.y > FLOOR_HEIGHT) {
-		rcPLRSprite.y = FLOOR_HEIGHT;
+	if (PLR_wY > FLOOR_HEIGHT) {
+		PLR_wY = FLOOR_HEIGHT;
 		PLR_yvel = 0;
 		PLR_jump = 0;
 		PLR_grounded = 1;
@@ -151,8 +164,29 @@ int main ( int argc, char *argv[] )
 	/* Apply gravity to player velocity */
 	PLR_yvel = PLR_yvel + GRAVITY;
 
-	gcvt(PLR_jump, 6, buf);
-	printf("\rbuffer is: %s", buf);
+	gcvt(camX, 6, buf);
+	printf("\nbuffer is: %s", buf);
+
+ /* Camera movement */
+if (camX > 0) {
+  camX = 0;
+}
+if (camY > 0) {
+  camY = 0;
+}
+if (camX < (LEVEL_WIDTH - SCREEN_WIDTH) - ((LEVEL_WIDTH - SCREEN_WIDTH)*2)) {
+  camX = (LEVEL_WIDTH - SCREEN_WIDTH) - ((LEVEL_WIDTH - SCREEN_WIDTH)*2);
+}
+if (camY < (LEVEL_HEIGHT - SCREEN_HEIGHT) - ((LEVEL_HEIGHT - SCREEN_HEIGHT)*2)) {
+  camY = (LEVEL_HEIGHT - SCREEN_HEIGHT) - ((LEVEL_HEIGHT - SCREEN_HEIGHT)*2);
+}
+
+  /* Apply player and world movement */
+rcGrass.x = camX;
+rcGrass.y = camY;
+rcPLRSprite.x = camX + PLR_wX;
+rcPLRSprite.y = camY + PLR_wY;
+
 	//fflush(stdout); 
 
     /* draw the background */

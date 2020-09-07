@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -Wall -Werror -Wextra -pedantic
-LDFLAGS = -lSDL
+LDFLAGS = -lSDL -lSDL_image
 
-SRC = main.cpp;
+SRC = main.cpp; 
 OBJ = $(SRC:.cc=.o)
 EXEC = SuperTuxFighter
 
