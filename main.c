@@ -17,6 +17,8 @@ int main ( int argc, char *argv[] )
 
   int colorkey, gameover;
 
+  float PLR_yvel, PLR_xvel;
+
   /* initialize SDL */
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -43,8 +45,8 @@ int main ( int argc, char *argv[] )
   /* set sprite position */
   rcPLRSprite.x = 0;
   rcPLRSprite.y = 0;
-  rcPLRSprite.xvel = 0;
-  rcPLRSprite.yvel = 0;
+  PLR_xvel = 0;
+  PLR_yvel = 0;
 
   gameover = 0;
 
@@ -81,11 +83,24 @@ int main ( int argc, char *argv[] )
       rcPLRSprite.x += 2;
     }
     if (keystate[SDLK_UP] ) {
-      rcPLRSprite.y -= 2;
+      //rcPLRSprite.y -= 2;
     }
     if (keystate[SDLK_DOWN] ) {
-      rcPLRSprite.y += 2;
+      //rcPLRSprite.y += 2;
     }
+
+	/* Apply velocity to the player */
+	rcPLRSprite.y = rcPLRSprite.y + PLR_yvel;
+	rcPLRSprite.x = rcPLRSprite.x + PLR_xvel;
+
+	/* Apply gravity to player velocity */
+	PLR_yvel = PLR_yvel + GRAVITY;
+
+	/* Check for floor collision */
+	if (rcPLRSprite.y > 300) {
+		PLR_yvel = 0;
+		rcPLRSprite.y = 300;
+	};
 
     /* draw the background */
     for (int x = 0; x < SCREEN_WIDTH / TEMP_BG_SIZE; x++) {
