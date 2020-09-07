@@ -1,10 +1,10 @@
-CXX = gcc
-CXXFLAGS = -Wall -Werror -Wextra -pedantic -std=c95
+CXX = g++
+CXXFLAGS = -Wall -Werror -Wextra -pedantic
 LDFLAGS = -lSDL
 
-SRC = main.c;
+SRC = main.cpp;
 OBJ = $(SRC:.cc=.o)
-EXEC = STFighter
+EXEC = SuperTuxFighter
 
 all: $(EXEC)
 
